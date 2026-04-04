@@ -22,7 +22,10 @@ export default function PlayDictee() {
 
   useEffect(() => {
     fetch(`/api/dictees/${id}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Not found')
+        return r.json()
+      })
       .then(setDictee)
       .catch(() => navigate('/'))
   }, [id, navigate])

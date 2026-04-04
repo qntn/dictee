@@ -17,7 +17,7 @@ public class DicteeService {
     }
 
     public Optional<Dictee> findById(String id) {
-        return dictees.stream().filter(d -> d.getId().equals(id)).findFirst();
+        return dictees.stream().filter(d -> id.equals(d.getId())).findFirst();
     }
 
     public Dictee create(Dictee dictee) {
