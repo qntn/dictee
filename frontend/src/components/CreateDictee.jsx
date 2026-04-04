@@ -23,17 +23,21 @@ export default function CreateDictee() {
   async function enregistrer() {
     if (!nom.trim() || mots.length === 0) return
     setErreur(false)
-    const response = await fetch('/api/dictees', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nom: nom.trim(), mots }),
-    })
-    if (!response.ok) {
+    try {
+      const response = await fetch('/api/dictees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom: nom.trim(), mots }),
+      })
+      if (!response.ok) {
+        setErreur(true)
+        return
+      }
+      const dictee = await response.json()
+      navigate(`/dictee/${dictee.id}`)
+    } catch {
       setErreur(true)
-      return
     }
-    const dictee = await response.json()
-    navigate(`/dictee/${dictee.id}`)
   }
 
   return (
