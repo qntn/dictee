@@ -38,24 +38,24 @@ export default function CreateDictation() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">✏️ Create a dictation</h1>
+      <h1 className="text-2xl font-bold mb-4">✏️ Créer une dictée</h1>
 
-      <label className="block mb-1 font-semibold">Dictation name</label>
+      <label className="block mb-1 font-semibold">Nom de la dictée</label>
       <input
         className="border rounded-lg p-2 w-full mb-4"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="e.g.: Farm animals"
+        placeholder="ex : Animaux de la ferme"
       />
 
-      <label className="block mb-1 font-semibold">Add a word</label>
+      <label className="block mb-1 font-semibold">Ajouter un mot</label>
       <div className="flex gap-2 mb-4">
         <input
           className="border rounded-lg p-2 flex-1"
           value={wordInput}
           onChange={(e) => setWordInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addWord()}
-          placeholder="e.g.: cat"
+          placeholder="ex : chat"
         />
         <button
           onClick={addWord}
@@ -89,12 +89,12 @@ export default function CreateDictation() {
         disabled={!name.trim() || words.length === 0}
         className="bg-green-500 hover:bg-green-600 disabled:opacity-40 text-white font-bold py-2 px-6 rounded-xl"
       >
-        Save dictation
+        Enregistrer la dictée
       </button>
 
       {error && (
         <p className="mt-4 text-red-600 font-semibold">
-          ❌ An error occurred. Please try again.
+          ❌ Une erreur est survenue. Veuillez réessayer.
         </p>
       )}
     </div>

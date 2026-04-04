@@ -62,25 +62,25 @@ export default function PlayDictation() {
     setFeedback(null)
   }
 
-  if (!dictation) return <p className="text-gray-400">Loading…</p>
+  if (!dictation) return <p className="text-gray-400">Chargement…</p>
 
   if (finished) {
     const score = results.filter((r) => r.correct).length
     const errors = results.filter((r) => !r.correct)
     return (
       <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2">🎉 Finished!</h1>
+        <h1 className="text-3xl font-bold mb-2">🎉 Terminé !</h1>
         <p className="text-2xl mb-4">
-          Score: <span className="font-bold text-green-600">{score}</span> / {dictation.words.length}
+          Score : <span className="font-bold text-green-600">{score}</span> / {dictation.words.length}
         </p>
         {errors.length > 0 && (
           <div className="text-left bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-            <p className="font-semibold mb-2 text-red-700">Words to review:</p>
+            <p className="font-semibold mb-2 text-red-700">Mots à retravailler :</p>
             <ul className="space-y-1">
               {errors.map((e, i) => (
                 <li key={i} className="text-sm">
-                  You wrote <span className="font-bold text-red-600">{e.answer || '(empty)'}</span>
-                  {' '}→ it was <span className="font-bold text-green-700">{e.word}</span>
+                  Tu as écrit <span className="font-bold text-red-600">{e.answer || '(vide)'}</span>
+                  {' '}→ c'était <span className="font-bold text-green-700">{e.word}</span>
                 </li>
               ))}
             </ul>
@@ -91,13 +91,13 @@ export default function PlayDictation() {
             onClick={restart}
             className="bg-yellow-400 hover:bg-yellow-500 font-bold py-2 px-6 rounded-xl"
           >
-            🔄 Restart
+            🔄 Recommencer
           </button>
           <button
             onClick={() => navigate('/')}
             className="bg-gray-200 hover:bg-gray-300 font-bold py-2 px-6 rounded-xl"
           >
-            ← Back
+            ← Retour
           </button>
         </div>
       </div>
@@ -107,12 +107,12 @@ export default function PlayDictation() {
   return (
     <div className="text-center">
       <h1 className="text-2xl font-bold mb-1">{dictation.name}</h1>
-      <p className="text-gray-500 mb-6">Word {index + 1} / {dictation.words.length}</p>
+      <p className="text-gray-500 mb-6">Mot {index + 1} / {dictation.words.length}</p>
 
       <button
         onClick={() => speak(dictation.words[index])}
         className="text-5xl mb-6 hover:scale-110 transition-transform"
-        aria-label="Listen to the word again"
+        aria-label="Réécouter le mot"
       >
         🔊
       </button>
@@ -130,12 +130,12 @@ export default function PlayDictation() {
         onChange={(e) => setAnswer(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && !feedback && validate()}
         disabled={!!feedback}
-        placeholder="Write the word…"
+        placeholder="Écris le mot…"
       />
 
       {feedback && (
         <p className={`text-lg font-bold mb-3 ${feedback === 'correct' ? 'text-green-600' : 'text-red-600'}`}>
-          {feedback === 'correct' ? '✅ Well done!' : '❌ Wrong!'}
+          {feedback === 'correct' ? '✅ Bravo !' : '❌ Raté !'}
         </p>
       )}
 
@@ -144,7 +144,7 @@ export default function PlayDictation() {
         disabled={!!feedback || !answer.trim()}
         className="bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white font-bold py-2 px-8 rounded-xl"
       >
-        Validate
+        Valider
       </button>
     </div>
   )

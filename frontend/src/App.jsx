@@ -7,8 +7,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-yellow-50">
       <nav className="bg-yellow-400 p-4 flex gap-6 text-lg font-bold">
-        <Link to="/" className="hover:underline">📋 Dictations</Link>
-        <Link to="/creer" className="hover:underline">✏️ Create a dictation</Link>
+        <Link to="/" className="hover:underline">📋 Les dictées</Link>
+        <Link to="/creer" className="hover:underline">✏️ Créer une dictée</Link>
       </nav>
       <main className="p-6 max-w-2xl mx-auto">
         <Routes>
