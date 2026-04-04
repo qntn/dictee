@@ -5,6 +5,7 @@ export default function CreateDictee() {
   const [nom, setNom] = useState('')
   const [motInput, setMotInput] = useState('')
   const [mots, setMots] = useState([])
+  const [erreur, setErreur] = useState(false)
   const navigate = useNavigate()
 
   function ajouterMot() {
@@ -21,12 +22,16 @@ export default function CreateDictee() {
 
   async function enregistrer() {
     if (!nom.trim() || mots.length === 0) return
+    setErreur(false)
     const response = await fetch('/api/dictees', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nom: nom.trim(), mots }),
     })
-    if (!response.ok) return
+    if (!response.ok) {
+      setErreur(true)
+      return
+    }
     const dictee = await response.json()
     navigate(`/dictee/${dictee.id}`)
   }
@@ -86,6 +91,12 @@ export default function CreateDictee() {
       >
         Enregistrer la dictée
       </button>
+
+      {erreur && (
+        <p className="mt-4 text-red-600 font-semibold">
+          ❌ Une erreur est survenue. Veuillez réessayer.
+        </p>
+      )}
     </div>
   )
 }
