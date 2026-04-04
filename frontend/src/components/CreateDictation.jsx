@@ -23,17 +23,21 @@ export default function CreateDictation() {
   async function save() {
     if (!name.trim() || words.length === 0) return
     setError(false)
-    const response = await fetch('/api/dictations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), words }),
-    })
-    if (!response.ok) {
+    try {
+      const response = await fetch('/api/dictations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), words }),
+      })
+      if (!response.ok) {
+        setError(true)
+        return
+      }
+      const dictation = await response.json()
+      navigate(`/dictation/${dictation.id}`)
+    } catch {
       setError(true)
-      return
     }
-    const dictation = await response.json()
-    navigate(`/dictation/${dictation.id}`)
   }
 
   return (
