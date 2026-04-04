@@ -1,42 +1,42 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export default function CreateDictee() {
-  const [nom, setNom] = useState('')
-  const [motInput, setMotInput] = useState('')
-  const [mots, setMots] = useState([])
-  const [erreur, setErreur] = useState(false)
+export default function CreateDictation() {
+  const [name, setName] = useState('')
+  const [wordInput, setWordInput] = useState('')
+  const [words, setWords] = useState([])
+  const [error, setError] = useState(false)
   const navigate = useNavigate()
 
-  function ajouterMot() {
-    const mot = motInput.trim().toLowerCase()
-    if (mot && !mots.includes(mot)) {
-      setMots([...mots, mot])
-      setMotInput('')
+  function addWord() {
+    const word = wordInput.trim().toLowerCase()
+    if (word && !words.includes(word)) {
+      setWords([...words, word])
+      setWordInput('')
     }
   }
 
-  function supprimerMot(index) {
-    setMots(mots.filter((_, i) => i !== index))
+  function deleteWord(index) {
+    setWords(words.filter((_, i) => i !== index))
   }
 
-  async function enregistrer() {
-    if (!nom.trim() || mots.length === 0) return
-    setErreur(false)
+  async function save() {
+    if (!name.trim() || words.length === 0) return
+    setError(false)
     try {
-      const response = await fetch('/api/dictees', {
+      const response = await fetch('/api/dictations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom: nom.trim(), mots }),
+        body: JSON.stringify({ name: name.trim(), words }),
       })
       if (!response.ok) {
-        setErreur(true)
+        setError(true)
         return
       }
-      const dictee = await response.json()
-      navigate(`/dictee/${dictee.id}`)
+      const dictation = await response.json()
+      navigate(`/dictation/${dictation.id}`)
     } catch {
-      setErreur(true)
+      setError(true)
     }
   }
 
@@ -47,8 +47,8 @@ export default function CreateDictee() {
       <label className="block mb-1 font-semibold">Nom de la dictée</label>
       <input
         className="border rounded-lg p-2 w-full mb-4"
-        value={nom}
-        onChange={(e) => setNom(e.target.value)}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
         placeholder="ex : Animaux de la ferme"
       />
 
@@ -56,29 +56,29 @@ export default function CreateDictee() {
       <div className="flex gap-2 mb-4">
         <input
           className="border rounded-lg p-2 flex-1"
-          value={motInput}
-          onChange={(e) => setMotInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && ajouterMot()}
+          value={wordInput}
+          onChange={(e) => setWordInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addWord()}
           placeholder="ex : chat"
         />
         <button
-          onClick={ajouterMot}
+          onClick={addWord}
           className="bg-yellow-400 hover:bg-yellow-500 font-bold px-4 rounded-lg"
         >
           +
         </button>
       </div>
 
-      {mots.length > 0 && (
+      {words.length > 0 && (
         <ul className="flex flex-wrap gap-2 mb-6">
-          {mots.map((m, i) => (
+          {words.map((w, i) => (
             <li
               key={i}
               className="bg-white border rounded-full px-3 py-1 flex items-center gap-2 text-sm"
             >
-              {m}
+              {w}
               <button
-                onClick={() => supprimerMot(i)}
+                onClick={() => deleteWord(i)}
                 className="text-red-400 hover:text-red-600 font-bold"
               >
                 ×
@@ -89,14 +89,14 @@ export default function CreateDictee() {
       )}
 
       <button
-        onClick={enregistrer}
-        disabled={!nom.trim() || mots.length === 0}
+        onClick={save}
+        disabled={!name.trim() || words.length === 0}
         className="bg-green-500 hover:bg-green-600 disabled:opacity-40 text-white font-bold py-2 px-6 rounded-xl"
       >
         Enregistrer la dictée
       </button>
 
-      {erreur && (
+      {error && (
         <p className="mt-4 text-red-600 font-semibold">
           ❌ Une erreur est survenue. Veuillez réessayer.
         </p>

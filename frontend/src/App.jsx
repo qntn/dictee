@@ -1,7 +1,7 @@
 import { Routes, Route, Link } from 'react-router-dom'
-import DicteeList from './components/DicteeList'
-import CreateDictee from './components/CreateDictee'
-import PlayDictee from './components/PlayDictee'
+import DictationList from './components/DictationList'
+import CreateDictation from './components/CreateDictation'
+import PlayDictation from './components/PlayDictation'
 
 export default function App() {
   return (
@@ -12,9 +12,9 @@ export default function App() {
       </nav>
       <main className="p-6 max-w-2xl mx-auto">
         <Routes>
-          <Route path="/" element={<DicteeList />} />
-          <Route path="/creer" element={<CreateDictee />} />
-          <Route path="/dictee/:id" element={<PlayDictee />} />
+          <Route path="/" element={<DictationList />} />
+          <Route path="/creer" element={<CreateDictation />} />
+          <Route path="/dictation/:id" element={<PlayDictation />} />
         </Routes>
       </main>
     </div>
