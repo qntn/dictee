@@ -1,0 +1,32 @@
+services:
+  # Backend — Spring Boot (Docker)
+  - type: web
+    name: dictee-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: CORS_ALLOWED_ORIGINS
+        fromService:
+          type: web
+          name: dictee-frontend
+          property: host
+          format: https://{value}
+
+  # Frontend — React/Vite (site statique)
+  - type: web
+    name: dictee-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    rootDir: ./frontend
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: dictee-backend
+          property: host
+          format: https://{value}

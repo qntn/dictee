@@ -31,6 +31,29 @@ Le projet propose deux parcours simples :
 - Affichage du score final et des erreurs
 - Recommencer une dictée
 
+## Déploiement sur Render
+
+Le projet inclut un fichier `render.yaml` permettant le déploiement automatique via la fonctionnalité [Blueprint](https://render.com/docs/blueprint-spec) de [Render](https://render.com).
+
+### Prérequis
+
+- Un compte [Render](https://render.com) (l'offre gratuite suffit)
+- Le dépôt forké ou connecté à votre compte GitHub
+
+### Étapes
+
+1. Connectez-vous à [Render](https://render.com) et cliquez sur **New > Blueprint**.
+2. Sélectionnez ce dépôt GitHub.
+3. Render détecte automatiquement le fichier `render.yaml` et crée les deux services :
+   - **dictee-backend** — API Spring Boot (Docker, port 8080, profil `prod`)
+   - **dictee-frontend** — site statique React/Vite
+4. Les variables d'environnement (`VITE_API_URL`, `CORS_ALLOWED_ORIGINS`, `SPRING_PROFILES_ACTIVE`) sont configurées automatiquement entre les deux services.
+5. Cliquez sur **Apply** pour lancer le déploiement.
+
+> **Note :** Sur l'offre gratuite, les services s'endorment après 15 minutes d'inactivité. Le premier appel après une période d'inactivité peut prendre quelques secondes.
+
+---
+
 ## Démarrage rapide
 
 ### Avec Docker Compose (recommandé)
