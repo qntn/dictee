@@ -14,7 +14,7 @@ services:
       - key: DATABASE_URL
         fromDatabase:
           name: dictee-db
-          property: connectionString
+          property: jdbcConnectionString
       - key: DATABASE_USERNAME
         fromDatabase:
           name: dictee-db
