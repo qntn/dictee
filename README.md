@@ -100,6 +100,60 @@ Exemple de payload `POST /dictations` :
 - La synthèse vocale dépend des voix disponibles dans le navigateur et le système.
 - Le frontend utilise un proxy Vite pour rediriger /api vers http://localhost:8080.
 
+## Profils Spring et configuration CORS
+
+Le backend utilise deux profils Spring pour gérer le CORS selon l'environnement.
+
+### Profil dev (développement local)
+
+Activez le profil dev lors du démarrage :
+
+    mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+Origine autorisée : http://localhost:5173 (serveur Vite)
+
+### Profil prod (production)
+
+Activez le profil prod et définissez l'origine de votre frontend :
+
+    SPRING_PROFILES_ACTIVE=prod mvn spring-boot:run
+
+Ou via les variables d'environnement système / votre plateforme de déploiement :
+
+    SPRING_PROFILES_ACTIVE=prod
+    CORS_ALLOWED_ORIGINS=https://votre-domaine.example.com
+
+En profil prod, le wildcard * n'est pas accepté. L'origine doit être explicite.
+Pour surcharger la valeur définie dans application-prod.properties, utilisez la variable d'environnement :
+
+    CORS_ALLOWED_ORIGINS=https://votre-domaine.example.com
+
+Ou la propriété système Java :
+
+    -Dcors.allowed-origins=https://votre-domaine.example.com
+
+### Sans profil actif
+
+Si aucun profil n'est activé, le backend utilise les valeurs de application.properties
+(origine autorisée : http://localhost:5173).
+
+## Variable d'environnement frontend
+
+| Variable       | Description                                          | Valeur par défaut |
+|----------------|------------------------------------------------------|-------------------|
+| `VITE_API_URL` | URL de base du backend (sans slash final)            | `` (vide)         |
+
+En développement, laissez `VITE_API_URL` vide : le proxy Vite redirige automatiquement
+les appels `/api/*` vers `http://localhost:8080`.
+
+En production, créez un fichier `.env.production` (voir `.env.example`) :
+
+    VITE_API_URL=https://api.votre-domaine.example.com
+
+Puis lancez le build :
+
+    npm run build
+
 ## Pistes d'évolution
 
 - Ajouter une persistance (H2, PostgreSQL, etc.)

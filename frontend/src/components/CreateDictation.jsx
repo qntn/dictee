@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE } from '../config'
 
 export default function CreateDictation() {
   const [name, setName] = useState('')
@@ -24,7 +25,7 @@ export default function CreateDictation() {
     if (!name.trim() || words.length === 0) return
     setError(false)
     try {
-      const response = await fetch('/api/dictations', {
+      const response = await fetch(`${API_BASE}/api/dictations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), words }),

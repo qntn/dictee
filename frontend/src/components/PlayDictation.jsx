@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { API_BASE } from '../config'
 
 function speak(word) {
   const utterance = new SpeechSynthesisUtterance(word)
@@ -21,7 +22,7 @@ export default function PlayDictation() {
   const [feedback, setFeedback] = useState(null)
 
   useEffect(() => {
-    fetch(`/api/dictations/${id}`)
+    fetch(`${API_BASE}/api/dictations/${id}`)
       .then((r) => {
         if (!r.ok) throw new Error('Not found')
         return r.json()

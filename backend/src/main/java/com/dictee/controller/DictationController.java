@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/dictations")
-@CrossOrigin(origins = "${cors.allowed-origins}")
 public class DictationController {
 
     private final DictationService dictationService;
