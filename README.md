@@ -12,14 +12,14 @@ Le projet propose deux parcours simples :
 ## Stack technique
 
 - Backend : Java 21 + Spring Boot
-- Frontend : React (Vite) + Tailwind CSS
+- Frontend : Vue 3 (Vite) + Vue Router + Tailwind CSS
 - Base de données : aucune pour l'instant (stockage en mémoire)
 - Synthèse vocale : Web Speech API du navigateur (fr-FR)
 
 ## Structure du projet
 
 - backend : API REST Spring Boot
-- frontend : interface React pour créer et passer les dictées
+- frontend : interface Vue 3 pour créer et passer les dictées
 
 ## Fonctionnalités implémentées
 
@@ -46,7 +46,7 @@ Le projet inclut un fichier `render.yaml` permettant le déploiement automatique
 2. Sélectionnez ce dépôt GitHub.
 3. Render détecte automatiquement le fichier `render.yaml` et crée les deux services :
    - **dictee-backend** — API Spring Boot (Docker, port 8080, profil `prod`)
-   - **dictee-frontend** — site statique React/Vite
+   - **dictee-frontend** — site statique Vue/Vite
 4. Les variables d'environnement (`VITE_API_URL`, `CORS_ALLOWED_ORIGINS`, `SPRING_PROFILES_ACTIVE`) sont configurées automatiquement entre les deux services.
 5. Cliquez sur **Apply** pour lancer le déploiement.
 
