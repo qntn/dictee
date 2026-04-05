@@ -2,6 +2,8 @@ package com.dictee.service;
 
 import com.dictee.model.Dictation;
 import com.dictee.repository.DictationRepository;
+import com.dictee.repository.DictationScoreRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,9 +13,11 @@ import java.util.Optional;
 public class DictationService {
 
     private final DictationRepository repository;
+    private final DictationScoreRepository scoreRepository;
 
-    public DictationService(DictationRepository repository) {
+    public DictationService(DictationRepository repository, DictationScoreRepository scoreRepository) {
         this.repository = repository;
+        this.scoreRepository = scoreRepository;
     }
 
     public List<Dictation> findAll() {
@@ -36,10 +40,12 @@ public class DictationService {
         });
     }
 
+    @Transactional
     public boolean delete(String id) {
         if (!repository.existsById(id)) {
             return false;
         }
+        scoreRepository.deleteByDictationId(id);
         repository.deleteById(id);
         return true;
     }
