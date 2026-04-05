@@ -1,6 +1,40 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import confetti from 'canvas-confetti'
 import { API_BASE } from '../config'
+
+function shootConfetti() {
+  confetti({
+    particleCount: 80,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ['#facc15', '#4ade80', '#60a5fa', '#f472b6', '#fb923c'],
+  })
+}
+
+function launchFireworks() {
+  const duration = 3000
+  const end = Date.now() + duration
+  const colors = ['#facc15', '#4ade80', '#60a5fa', '#f472b6', '#fb923c', '#a78bfa']
+
+  ;(function frame() {
+    confetti({
+      particleCount: 6,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors,
+    })
+    confetti({
+      particleCount: 6,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors,
+    })
+    if (Date.now() < end) requestAnimationFrame(frame)
+  })()
+}
 
 function speak(word) {
   const utterance = new SpeechSynthesisUtterance(word)
@@ -37,12 +71,17 @@ export default function PlayDictation() {
     }
   }, [dictation, index, finished])
 
+  useEffect(() => {
+    if (finished) launchFireworks()
+  }, [finished])
+
   function validate() {
     const expectedWord = dictation.words[index]
     const correct = answer.trim().toLowerCase() === expectedWord.toLowerCase()
     const newResults = [...results, { word: expectedWord, answer: answer.trim(), correct }]
     setResults(newResults)
     setFeedback(correct ? 'correct' : 'incorrect')
+    if (correct) shootConfetti()
 
     setTimeout(() => {
       setFeedback(null)
