@@ -1,46 +1,49 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/vue'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { createRouter, createMemoryHistory } from 'vue-router'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import CreateDictation from '../CreateDictation'
+import CreateDictation from '../CreateDictation.vue'
 
-const mockNavigate = vi.fn()
-vi.mock('react-router-dom', async (importOriginal) => {
-  const original = await importOriginal()
-  return { ...original, useNavigate: () => mockNavigate }
-})
+function createTestRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { template: '<div>home</div>' } },
+      { path: '/creer', component: CreateDictation },
+      { path: '/dictation/:id', component: { template: '<div>play</div>' } },
+    ],
+  })
+}
 
-function renderCreate() {
-  return render(
-    <MemoryRouter>
-      <CreateDictation />
-    </MemoryRouter>
-  )
+async function renderCreate() {
+  const router = createTestRouter()
+  await router.push('/creer')
+  const result = render(CreateDictation, { global: { plugins: [router] } })
+  return { ...result, router }
 }
 
 describe('CreateDictation', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
-    mockNavigate.mockReset()
   })
 
-  it('affiche le formulaire de création', () => {
-    renderCreate()
+  it('affiche le formulaire de création', async () => {
+    await renderCreate()
     expect(screen.getByLabelText('Nom de la dictée')).toBeInTheDocument()
     expect(screen.getByLabelText('Ajouter un mot')).toBeInTheDocument()
     expect(screen.getByText('Enregistrer la dictée')).toBeDisabled()
   })
 
   it('ajoute un mot à la liste', async () => {
-    renderCreate()
+    await renderCreate()
     const input = screen.getByLabelText('Ajouter un mot')
     await userEvent.type(input, 'chat')
     await userEvent.keyboard('{Enter}')
     expect(screen.getByText('chat')).toBeInTheDocument()
   })
 
-  it('n\'ajoute pas de doublons', async () => {
-    renderCreate()
+  it("n'ajoute pas de doublons", async () => {
+    await renderCreate()
     const input = screen.getByLabelText('Ajouter un mot')
     await userEvent.type(input, 'chat')
     await userEvent.keyboard('{Enter}')
@@ -50,26 +53,21 @@ describe('CreateDictation', () => {
   })
 
   it('supprime un mot', async () => {
-    renderCreate()
+    await renderCreate()
     const input = screen.getByLabelText('Ajouter un mot')
     await userEvent.type(input, 'chien')
     await userEvent.keyboard('{Enter}')
     expect(screen.getByText('chien')).toBeInTheDocument()
 
-    const deleteBtn = screen.getByLabelText('Supprimer le mot chien')
-    await userEvent.click(deleteBtn)
+    await userEvent.click(screen.getByLabelText('Supprimer le mot chien'))
     expect(screen.queryByText('chien')).not.toBeInTheDocument()
   })
 
   it('active le bouton sauvegarder quand nom et mots sont renseignés', async () => {
-    renderCreate()
-    const nameInput = screen.getByLabelText('Nom de la dictée')
-    const wordInput = screen.getByLabelText('Ajouter un mot')
-
-    await userEvent.type(nameInput, 'Animaux')
-    await userEvent.type(wordInput, 'chat')
+    await renderCreate()
+    await userEvent.type(screen.getByLabelText('Nom de la dictée'), 'Animaux')
+    await userEvent.type(screen.getByLabelText('Ajouter un mot'), 'chat')
     await userEvent.keyboard('{Enter}')
-
     expect(screen.getByText('Enregistrer la dictée')).not.toBeDisabled()
   })
 
@@ -80,19 +78,21 @@ describe('CreateDictation', () => {
         json: () => Promise.resolve({ id: 'abc', name: 'Animaux', words: ['chat'] }),
       })
     )
-    renderCreate()
+    const { router } = await renderCreate()
 
     await userEvent.type(screen.getByLabelText('Nom de la dictée'), 'Animaux')
     await userEvent.type(screen.getByLabelText('Ajouter un mot'), 'chat')
     await userEvent.keyboard('{Enter}')
     await userEvent.click(screen.getByText('Enregistrer la dictée'))
 
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/dictation/abc'))
+    await waitFor(() =>
+      expect(router.currentRoute.value.path).toBe('/dictation/abc')
+    )
   })
 
   it('affiche une erreur si le fetch échoue', async () => {
     global.fetch = vi.fn(() => Promise.reject(new Error('fail')))
-    renderCreate()
+    await renderCreate()
 
     await userEvent.type(screen.getByLabelText('Nom de la dictée'), 'Animaux')
     await userEvent.type(screen.getByLabelText('Ajouter un mot'), 'chat')

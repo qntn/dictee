@@ -1,16 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/vue'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import DictationList from '../DictationList'
+import DictationList from '../DictationList.vue'
 
-function renderList() {
-  return render(
-    <MemoryRouter>
-      <DictationList />
-    </MemoryRouter>
-  )
-}
+const stubs = { RouterLink: { template: '<a><slot /></a>' } }
 
 describe('DictationList', () => {
   beforeEach(() => {
@@ -19,7 +12,7 @@ describe('DictationList', () => {
 
   it('affiche un indicateur de chargement au départ', () => {
     global.fetch = vi.fn(() => new Promise(() => {}))
-    renderList()
+    render(DictationList, { global: { stubs } })
     expect(screen.getByText('Chargement…')).toBeInTheDocument()
   })
 
@@ -27,10 +20,8 @@ describe('DictationList', () => {
     global.fetch = vi.fn(() =>
       Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
     )
-    renderList()
-    await waitFor(() =>
-      expect(screen.getByText(/Aucune dictée/)).toBeInTheDocument()
-    )
+    render(DictationList, { global: { stubs } })
+    await waitFor(() => expect(screen.getByText(/Aucune dictée/)).toBeInTheDocument())
   })
 
   it('affiche les dictées chargées', async () => {
@@ -44,25 +35,23 @@ describe('DictationList', () => {
           ]),
       })
     )
-    renderList()
+    render(DictationList, { global: { stubs } })
     await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
     expect(screen.getByText('Couleurs')).toBeInTheDocument()
     expect(screen.getByText('2 mot(s)')).toBeInTheDocument()
   })
 
-  it('affiche un message d\'erreur si le fetch échoue', async () => {
+  it("affiche un message d'erreur si le fetch échoue", async () => {
     global.fetch = vi.fn(() => Promise.reject(new Error('network error')))
-    renderList()
+    render(DictationList, { global: { stubs } })
     await waitFor(() =>
       expect(screen.getByText(/Impossible de charger/)).toBeInTheDocument()
     )
   })
 
-  it('affiche un message d\'erreur si la réponse n\'est pas ok', async () => {
-    global.fetch = vi.fn(() =>
-      Promise.resolve({ ok: false })
-    )
-    renderList()
+  it("affiche un message d'erreur si la réponse n'est pas ok", async () => {
+    global.fetch = vi.fn(() => Promise.resolve({ ok: false }))
+    render(DictationList, { global: { stubs } })
     await waitFor(() =>
       expect(screen.getByText(/Impossible de charger/)).toBeInTheDocument()
     )
@@ -73,11 +62,10 @@ describe('DictationList', () => {
       .mockRejectedValueOnce(new Error('fail'))
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
 
-    renderList()
+    render(DictationList, { global: { stubs } })
     await waitFor(() => expect(screen.getByText(/Impossible de charger/)).toBeInTheDocument())
 
-    const retry = screen.getByText('Réessayer')
-    await userEvent.click(retry)
+    await userEvent.click(screen.getByText('Réessayer'))
     await waitFor(() => expect(screen.getByText(/Aucune dictée/)).toBeInTheDocument())
   })
 })

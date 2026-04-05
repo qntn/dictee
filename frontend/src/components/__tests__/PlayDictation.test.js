@@ -1,40 +1,36 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/vue'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { createRouter, createMemoryHistory } from 'vue-router'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import PlayDictation from '../PlayDictation'
+import PlayDictation from '../PlayDictation.vue'
 
-// Prevent canvas-confetti from triggering requestAnimationFrame loops
 vi.mock('canvas-confetti', () => ({ default: vi.fn() }))
-
-const mockNavigate = vi.fn()
-vi.mock('react-router-dom', async (importOriginal) => {
-  const original = await importOriginal()
-  return { ...original, useNavigate: () => mockNavigate }
-})
 
 const mockDictation = { id: 'abc', name: 'Animaux', words: ['chat', 'chien'] }
 
-function renderPlay(id = 'abc') {
-  return render(
-    <MemoryRouter initialEntries={[`/dictation/${id}`]}>
-      <Routes>
-        <Route path="/dictation/:id" element={<PlayDictation />} />
-      </Routes>
-    </MemoryRouter>
-  )
+function createTestRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { template: '<div>home</div>' } },
+      { path: '/dictation/:id', component: PlayDictation },
+    ],
+  })
+}
+
+async function renderPlay() {
+  const router = createTestRouter()
+  await router.push('/dictation/abc')
+  return render(PlayDictation, { global: { plugins: [router] } })
 }
 
 describe('PlayDictation', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
-    mockNavigate.mockReset()
 
-    // Mock speechSynthesis
     global.window.speechSynthesis = { cancel: vi.fn(), speak: vi.fn() }
     global.SpeechSynthesisUtterance = vi.fn()
 
-    // Default fetch mock
     global.fetch = vi.fn((url) => {
       if (url.includes('/scores')) {
         return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
@@ -46,40 +42,41 @@ describe('PlayDictation', () => {
     })
   })
 
-  it('affiche un message de chargement puis le nom de la dictee', async () => {
-    renderPlay()
-    expect(screen.getByText(/Chargement/)).toBeInTheDocument()
+  it('affiche un message de chargement puis le nom de la dictée', async () => {
+    await renderPlay()
+    expect(screen.getByText('Chargement…')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
   })
 
-  it('navigue vers / si la dictee nest pas trouvee', async () => {
+  it('navigue vers / si la dictée est introuvable', async () => {
     global.fetch = vi.fn(() => Promise.resolve({ ok: false }))
-    renderPlay('unknown')
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/'))
+    const router = createTestRouter()
+    await router.push('/dictation/unknown')
+    render(PlayDictation, { global: { plugins: [router] } })
+    await waitFor(() => expect(router.currentRoute.value.path).toBe('/'))
   })
 
   it('affiche le compteur de mots', async () => {
-    renderPlay()
+    await renderPlay()
     await waitFor(() => expect(screen.getByText('Mot 1 / 2')).toBeInTheDocument())
   })
 
-  it('valide une bonne reponse et affiche le feedback', async () => {
-    renderPlay()
+  it('valide une bonne réponse et affiche le feedback', async () => {
+    await renderPlay()
     await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
 
     await userEvent.type(screen.getByPlaceholderText(/cris le mot/), 'chat')
     await userEvent.click(screen.getByText('Valider'))
 
     await waitFor(() => expect(screen.getByText(/Bravo/)).toBeInTheDocument())
-    // After 1200ms feedback clears and next word shown
     await waitFor(
       () => expect(screen.getByText('Mot 2 / 2')).toBeInTheDocument(),
       { timeout: 3000 }
     )
   }, 10000)
 
-  it('affiche un feedback derreur pour une mauvaise reponse', async () => {
-    renderPlay()
+  it("affiche un feedback d'erreur pour une mauvaise réponse", async () => {
+    await renderPlay()
     await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
 
     await userEvent.type(screen.getByPlaceholderText(/cris le mot/), 'cheval')
@@ -88,23 +85,21 @@ describe('PlayDictation', () => {
     await waitFor(() => expect(screen.getByText(/Rat/)).toBeInTheDocument())
   })
 
-  it('affiche lecran de fin avec le score', async () => {
-    renderPlay()
+  it("affiche l'écran de fin avec le score", async () => {
+    await renderPlay()
     await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
 
-    // Mot 1 correct
     await userEvent.type(screen.getByPlaceholderText(/cris le mot/), 'chat')
     await userEvent.click(screen.getByText('Valider'))
     await waitFor(() => expect(screen.getByText('Mot 2 / 2')).toBeInTheDocument(), { timeout: 3000 })
 
-    // Mot 2 incorrect
     await userEvent.type(screen.getByPlaceholderText(/cris le mot/), 'cheva')
     await userEvent.click(screen.getByText('Valider'))
 
     await waitFor(() => expect(screen.getByText(/Termin/)).toBeInTheDocument(), { timeout: 3000 })
   }, 15000)
 
-  it('le mode tolerance accent accepte une reponse sans accent', async () => {
+  it('le mode tolérance accent accepte une réponse sans accent', async () => {
     global.fetch = vi.fn((url) => {
       if (url.includes('/scores')) {
         return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
@@ -115,7 +110,7 @@ describe('PlayDictation', () => {
       })
     })
 
-    renderPlay()
+    await renderPlay()
     await waitFor(() => expect(screen.getByText('Test')).toBeInTheDocument())
 
     await userEvent.click(screen.getByLabelText('Accepter sans accents'))
