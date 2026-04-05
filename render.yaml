@@ -24,7 +24,7 @@ services:
           name: dictee-db
           property: password
 
-  # Frontend — React/Vite (site statique)
+  # Frontend — Vue/Vite (site statique)
   - type: web
     name: dictee-frontend
     runtime: static
