@@ -19,7 +19,7 @@ function addWord() {
 }
 
 function deleteWord(index) {
-  words.value.splice(index, 1)
+  words.value = words.value.filter((_, i) => i !== index)
 }
 
 async function save() {
