@@ -35,10 +35,19 @@ public class DataSourceConfig {
     }
 
     static String toJdbcUrl(String url) {
-        if (url == null || url.startsWith("jdbc")) {
-            return url;
+        if (url == null) {
+            return null;
         }
-        // Convert postgres:// or postgresql:// to jdbc:postgresql://
-        return url.replaceFirst("^postgres(ql)?://", "jdbc:postgresql://");
+        String jdbcUrl;
+        if (url.startsWith("jdbc:")) {
+            jdbcUrl = url;
+        } else {
+            // Convert postgres:// or postgresql:// to jdbc:postgresql://
+            jdbcUrl = url.replaceFirst("^postgres(ql)?://", "jdbc:postgresql://");
+        }
+        // Strip embedded user:password@ from the URL authority – the PostgreSQL JDBC
+        // driver does not support the userinfo component and rejects such URLs.
+        // Credentials are supplied separately via DATABASE_USERNAME / DATABASE_PASSWORD.
+        return jdbcUrl.replaceFirst("(jdbc:postgresql://)(.+@)", "$1");
     }
 }
