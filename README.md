@@ -33,37 +33,66 @@ Le projet propose deux parcours simples :
 
 ## Démarrage rapide
 
-### 1) Lancer le backend
+### Avec Docker Compose (recommandé)
 
-Depuis le dossier backend :
+Prérequis : [Docker](https://docs.docker.com/get-docker/) installé.
 
+Depuis la racine du projet :
+
+```bash
+docker compose up --build
+```
+
+- Frontend : http://localhost:80
+- API backend : http://localhost:8080/api
+
+Le frontend appelle le backend via un reverse-proxy nginx intégré (`/api` → `http://backend:8080/api`).
+
+Pour arrêter les services :
+
+```bash
+docker compose down
+```
+
+### En développement (sans Docker)
+
+#### 1) Lancer le backend
+
+Depuis le dossier `backend` :
+
+```bash
 mvn spring-boot:run
+```
 
 Le backend démarre sur le port 8080.
 
-### 2) Lancer le frontend
+#### 2) Lancer le frontend
 
-Depuis le dossier frontend :
+Depuis le dossier `frontend` :
 
+```bash
 npm install
 npm run dev
+```
 
-Le frontend démarre sur le port 5173.
+Le frontend démarre sur le port 5173. Le proxy Vite redirige automatiquement `/api` vers `http://localhost:8080`.
 
 ## API REST
 
-Base URL : http://localhost:8080/api
+Base URL : `http://localhost:8080/api`
 
-- GET /dictees : récupérer toutes les dictées
-- GET /dictees/{id} : récupérer une dictée par son identifiant
-- POST /dictees : créer une dictée
+- `GET  /dictations`      — récupérer toutes les dictées
+- `GET  /dictations/{id}` — récupérer une dictée par son identifiant
+- `POST /dictations`      — créer une dictée
 
-Exemple de payload POST /dictees :
+Exemple de payload `POST /dictations` :
 
+```json
 {
-	"nom": "Animaux",
-	"mots": ["chat", "chien", "lapin"]
+  "name": "Animaux",
+  "words": ["chat", "chien", "lapin"]
 }
+```
 
 ## Notes importantes
 
