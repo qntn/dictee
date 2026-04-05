@@ -1,11 +1,34 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: dictee
+      POSTGRES_USER: dictee
+      POSTGRES_PASSWORD: dictee
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dictee"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
     ports:
       - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/dictee
+      SPRING_DATASOURCE_USERNAME: dictee
+      SPRING_DATASOURCE_PASSWORD: dictee
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      CORS_ALLOWED_ORIGINS: http://localhost:80
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/dictations || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -19,3 +42,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  postgres-data:

@@ -1,30 +1,34 @@
 package com.dictee.model;
 
-import java.util.List;
-import java.util.UUID;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Dictation {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @NotBlank(message = "Le nom ne peut pas être vide")
+    @Size(max = 100, message = "Le nom ne peut pas dépasser 100 caractères")
+    @Column(nullable = false, length = 100)
     private String name;
+
+    @NotEmpty(message = "La liste de mots ne peut pas être vide")
+    @ElementCollection
+    @OrderColumn
     private List<String> words;
-
-    public Dictation() {
-        this.id = UUID.randomUUID().toString();
-    }
-
-    public Dictation(String name, List<String> words) {
-        this.id = UUID.randomUUID().toString();
-        this.name = name;
-        this.words = words;
-    }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public List<String> getWords() { return words; }
-    public void setWords(List<String> words) { this.words = words; }
 }

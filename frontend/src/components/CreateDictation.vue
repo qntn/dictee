@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { API_BASE } from '../config'
 
@@ -10,6 +10,10 @@ const wordInput = ref('')
 const words = ref([])
 const error = ref(false)
 
+onMounted(() => {
+  document.title = 'Créer une dictée | Dictée'
+})
+
 function addWord() {
   const word = wordInput.value.trim().toLowerCase()
   if (word && !words.value.includes(word)) {
@@ -18,8 +22,8 @@ function addWord() {
   }
 }
 
-function deleteWord(index) {
-  words.value = words.value.filter((_, i) => i !== index)
+function deleteWord(word) {
+  words.value = words.value.filter((w) => w !== word)
 }
 
 async function save() {
@@ -47,22 +51,25 @@ async function save() {
   <div>
     <h1 class="text-2xl font-bold mb-4">✏️ Créer une dictée</h1>
 
-    <label class="block mb-1 font-semibold">Nom de la dictée</label>
+    <label for="dictation-name" class="block mb-1 font-semibold">Nom de la dictée</label>
     <input
+      id="dictation-name"
       v-model="name"
       class="border rounded-lg p-2 w-full mb-4"
       placeholder="ex : Animaux de la ferme"
     />
 
-    <label class="block mb-1 font-semibold">Ajouter un mot</label>
+    <label for="word-input" class="block mb-1 font-semibold">Ajouter un mot</label>
     <div class="flex gap-2 mb-4">
       <input
+        id="word-input"
         v-model="wordInput"
         class="border rounded-lg p-2 flex-1"
         placeholder="ex : chat"
         @keydown.enter="addWord"
       />
       <button
+        aria-label="Ajouter le mot"
         class="bg-yellow-400 hover:bg-yellow-500 font-bold px-4 rounded-lg"
         @click="addWord"
       >
@@ -70,16 +77,17 @@ async function save() {
       </button>
     </div>
 
-    <ul v-if="words.length > 0" class="flex flex-wrap gap-2 mb-6">
+    <ul v-if="words.length > 0" class="flex flex-wrap gap-2 mb-6" aria-label="Mots de la dictée">
       <li
-        v-for="(w, i) in words"
-        :key="i"
+        v-for="w in words"
+        :key="w"
         class="bg-white border rounded-full px-3 py-1 flex items-center gap-2 text-sm"
       >
         {{ w }}
         <button
+          :aria-label="`Supprimer le mot ${w}`"
           class="text-red-400 hover:text-red-600 font-bold"
-          @click="deleteWord(i)"
+          @click="deleteWord(w)"
         >
           ×
         </button>
@@ -94,7 +102,7 @@ async function save() {
       Enregistrer la dictée
     </button>
 
-    <p v-if="error" class="mt-4 text-red-600 font-semibold">
+    <p v-if="error" class="mt-4 text-red-600 font-semibold" role="alert">
       ❌ Une erreur est survenue. Veuillez réessayer.
     </p>
   </div>
