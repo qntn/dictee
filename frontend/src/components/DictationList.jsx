@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { API_BASE } from '../config'
 
 export default function DictationList() {
   const [dictations, setDictations] = useState([])
 
   useEffect(() => {
-    fetch('/api/dictations')
+    fetch(`${API_BASE}/api/dictations`)
       .then((r) => r.json())
       .then(setDictations)
       .catch(() => {})
