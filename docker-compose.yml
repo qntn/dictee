@@ -22,7 +22,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/dictee
       SPRING_DATASOURCE_USERNAME: dictee
       SPRING_DATASOURCE_PASSWORD: dictee
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       CORS_ALLOWED_ORIGINS: http://localhost:80
     depends_on:
       db:
