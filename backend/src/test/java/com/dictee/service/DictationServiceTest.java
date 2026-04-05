@@ -2,6 +2,7 @@ package com.dictee.service;
 
 import com.dictee.model.Dictation;
 import com.dictee.repository.DictationRepository;
+import com.dictee.repository.DictationScoreRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +22,9 @@ class DictationServiceTest {
 
     @Mock
     private DictationRepository repository;
+
+    @Mock
+    private DictationScoreRepository scoreRepository;
 
     @InjectMocks
     private DictationService service;
@@ -95,6 +99,7 @@ class DictationServiceTest {
 
         assertThat(service.delete("abc")).isTrue();
         verify(repository).deleteById("abc");
+        verify(scoreRepository).deleteByDictationId("abc");
     }
 
     @Test
