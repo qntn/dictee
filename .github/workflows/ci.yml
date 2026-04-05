@@ -8,8 +8,10 @@ on:
 
 jobs:
   backend:
-    name: Backend – build & test
+    name: Backend - build & test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -26,8 +28,10 @@ jobs:
         working-directory: backend
 
   frontend:
-    name: Frontend – install & build
+    name: Frontend - install & build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
