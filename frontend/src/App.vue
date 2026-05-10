@@ -2,7 +2,8 @@
   <div class="min-h-screen bg-yellow-50">
     <nav class="bg-yellow-400 p-4 flex gap-6 text-lg font-bold">
       <RouterLink to="/" class="hover:underline">📋 Les dictées</RouterLink>
-      <RouterLink to="/creer" class="hover:underline">✏️ Créer une dictée</RouterLink>
+      <RouterLink to="/creer" class="hover:underline">✏️ Créer dictée de mots</RouterLink>
+      <RouterLink to="/creer-texte" class="hover:underline">📝 Créer dictée de texte</RouterLink>
     </nav>
     <main class="p-6 max-w-2xl mx-auto">
       <RouterView />

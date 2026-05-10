@@ -8,10 +8,6 @@ vi.mock('canvas-confetti', () => ({ default: vi.fn() }))
 
 const mockDictation = { id: 'abc', name: 'Animaux', words: ['chat', 'chien'] }
 
-// Mock Math.random to make tests deterministic
-let mockRandomValue = 0.5
-vi.spyOn(Math, 'random').mockImplementation(() => mockRandomValue)
-
 function createTestRouter() {
   return createRouter({
     history: createMemoryHistory(),
@@ -31,6 +27,7 @@ async function renderPlay() {
 describe('PlayDictation', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
 
     global.window.speechSynthesis = { cancel: vi.fn(), speak: vi.fn() }
     global.SpeechSynthesisUtterance = vi.fn()
@@ -77,7 +74,7 @@ describe('PlayDictation', () => {
     await userEvent.type(input, firstWord)
     await userEvent.click(screen.getByText('Valider'))
 
-    await waitFor(() => expect(screen.getByText(/Bravo|Rat/)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/Bravo/)).toBeInTheDocument())
     await waitFor(
       () => expect(screen.getByText('Mot 2 / 2')).toBeInTheDocument(),
       { timeout: 3000 }

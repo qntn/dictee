@@ -25,8 +25,8 @@ describe('DictationList', () => {
   })
 
   it('affiche les dictées chargées', async () => {
-    global.fetch = vi.fn(() =>
-      Promise.resolve({
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve([
@@ -34,7 +34,8 @@ describe('DictationList', () => {
             { id: '2', name: 'Couleurs', words: ['rouge'] },
           ]),
       })
-    )
+      // DictationList now loads word dictations and text dictations in parallel.
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
     render(DictationList, { global: { stubs } })
     await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
     expect(screen.getByText('Couleurs')).toBeInTheDocument()
@@ -59,7 +60,12 @@ describe('DictationList', () => {
 
   it('permet de recharger après une erreur', async () => {
     global.fetch = vi.fn()
+      // Initial load: first request fails.
       .mockRejectedValueOnce(new Error('fail'))
+      // Initial load: second parallel request still resolves.
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
+      // Retry load: both parallel requests resolve.
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
 
     render(DictationList, { global: { stubs } })
@@ -67,6 +73,8 @@ describe('DictationList', () => {
 
     await userEvent.click(screen.getByText('Réessayer'))
     await waitFor(() => expect(screen.getByText(/Aucune dictée/)).toBeInTheDocument())
+    // 2 calls on first load + 2 calls on retry (Promise.all on both attempts).
+    expect(global.fetch).toHaveBeenCalledTimes(4)
   })
 
   it('supprime une dictée visuellement après confirmation', async () => {
@@ -79,6 +87,7 @@ describe('DictationList', () => {
             { id: '2', name: 'Couleurs', words: ['rouge'] },
           ]),
       })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
       .mockResolvedValueOnce({ ok: true })
 
     global.confirm = vi.fn(() => true)
@@ -95,15 +104,15 @@ describe('DictationList', () => {
   })
 
   it('ne supprime pas une dictée si l\'utilisateur annule', async () => {
-    global.fetch = vi.fn(() =>
-      Promise.resolve({
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve([
             { id: '1', name: 'Animaux', words: ['chat', 'chien'] },
           ]),
       })
-    )
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
     global.confirm = vi.fn(() => false)
 
     render(DictationList, { global: { stubs } })
@@ -113,7 +122,7 @@ describe('DictationList', () => {
     await userEvent.click(deleteButton)
 
     expect(screen.getByText('Animaux')).toBeInTheDocument()
-    expect(global.fetch).toHaveBeenCalledTimes(1)
+    expect(global.fetch).toHaveBeenCalledTimes(2)
   })
 
   it('restaure la dictée si la suppression échoue', async () => {
@@ -126,6 +135,7 @@ describe('DictationList', () => {
             { id: '2', name: 'Couleurs', words: ['rouge'] },
           ]),
       })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
       .mockResolvedValueOnce({ ok: false })
 
     global.confirm = vi.fn(() => true)
