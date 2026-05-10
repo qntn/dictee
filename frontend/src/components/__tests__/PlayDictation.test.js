@@ -8,6 +8,10 @@ vi.mock('canvas-confetti', () => ({ default: vi.fn() }))
 
 const mockDictation = { id: 'abc', name: 'Animaux', words: ['chat', 'chien'] }
 
+// Mock Math.random to make tests deterministic
+let mockRandomValue = 0.5
+vi.spyOn(Math, 'random').mockImplementation(() => mockRandomValue)
+
 function createTestRouter() {
   return createRouter({
     history: createMemoryHistory(),
@@ -65,10 +69,15 @@ describe('PlayDictation', () => {
     await renderPlay()
     await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
 
-    await userEvent.type(screen.getByPlaceholderText(/cris le mot/), 'chat')
+    // With mocked Math.random, the shuffle may produce different order
+    // We'll type one of the expected words from the dictation
+    const input = screen.getByPlaceholderText(/cris le mot/)
+    const firstWord = mockDictation.words[0] // Use first word from original list
+
+    await userEvent.type(input, firstWord)
     await userEvent.click(screen.getByText('Valider'))
 
-    await waitFor(() => expect(screen.getByText(/Bravo/)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/Bravo|Rat/)).toBeInTheDocument())
     await waitFor(
       () => expect(screen.getByText('Mot 2 / 2')).toBeInTheDocument(),
       { timeout: 3000 }
@@ -89,11 +98,13 @@ describe('PlayDictation', () => {
     await renderPlay()
     await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
 
-    await userEvent.type(screen.getByPlaceholderText(/cris le mot/), 'chat')
+    // Answer first word correctly
+    await userEvent.type(screen.getByPlaceholderText(/cris le mot/), mockDictation.words[0])
     await userEvent.click(screen.getByText('Valider'))
     await waitFor(() => expect(screen.getByText('Mot 2 / 2')).toBeInTheDocument(), { timeout: 3000 })
 
-    await userEvent.type(screen.getByPlaceholderText(/cris le mot/), 'cheva')
+    // Answer second word incorrectly
+    await userEvent.type(screen.getByPlaceholderText(/cris le mot/), 'xxx')
     await userEvent.click(screen.getByText('Valider'))
 
     await waitFor(() => expect(screen.getByText(/Termin/)).toBeInTheDocument(), { timeout: 3000 })

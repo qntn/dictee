@@ -56,6 +56,16 @@ function normalize(str) {
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 }
 
+/** Shuffle array using Fisher-Yates algorithm. */
+function shuffleArray(array) {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 onMounted(() => {
   fetch(`${API_BASE}/api/dictations/${route.params.id}`)
     .then((r) => {
@@ -64,7 +74,7 @@ onMounted(() => {
     })
     .then((data) => {
       dictation.value = data
-      words.value = data.words
+      words.value = shuffleArray(data.words)
       document.title = `${data.name} — Dictée`
     })
     .catch(() => router.push('/'))
@@ -125,7 +135,7 @@ function validate() {
 function restart(customWords) {
   clearTimeout(speakTimeout)
   clearTimeout(feedbackTimeout)
-  words.value = customWords ?? dictation.value.words
+  words.value = customWords ?? shuffleArray(dictation.value.words)
   index.value = 0
   answer.value = ''
   results.value = []
