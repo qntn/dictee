@@ -16,6 +16,10 @@ const finished = ref(false)
 const feedback = ref(null)
 const ignoreAccents = ref(false)
 const scores = ref([])
+const currentHint = ref(null)
+const hintLevel = ref(0)
+const hintsUsed = ref(0)
+const errorFeedback = ref(null)
 
 let speakTimeout = null
 let feedbackTimeout = null
@@ -106,20 +110,36 @@ function validate() {
     ? normalize(answer.value.trim()) === normalize(expectedWord)
     : answer.value.trim().toLowerCase() === expectedWord.toLowerCase()
 
-  results.value.push({ word: expectedWord, answer: answer.value.trim(), correct: compare })
+  results.value.push({
+    word: expectedWord,
+    answer: answer.value.trim(),
+    correct: compare,
+    hintsUsed: hintsUsed.value
+  })
+
   feedback.value = compare ? 'correct' : 'incorrect'
+
+  // If incorrect, show error analysis
+  if (!compare) {
+    analyzeError(answer.value.trim(), expectedWord)
+  }
+
   if (compare) shootConfetti()
 
   clearTimeout(feedbackTimeout)
   feedbackTimeout = setTimeout(() => {
     feedback.value = null
     answer.value = ''
+    currentHint.value = null
+    hintLevel.value = 0
+    hintsUsed.value = 0
+    errorFeedback.value = null
     if (index.value + 1 >= words.value.length) {
       finished.value = true
     } else {
       index.value++
     }
-  }, 1200)
+  }, compare ? 1200 : 2500) // Show error feedback longer
 }
 
 function restart(customWords) {
@@ -131,6 +151,53 @@ function restart(customWords) {
   results.value = []
   finished.value = false
   feedback.value = null
+  currentHint.value = null
+  hintLevel.value = 0
+  hintsUsed.value = 0
+  errorFeedback.value = null
+}
+
+async function requestHint() {
+  if (feedback.value) return // Don't allow hints during feedback
+  if (hintLevel.value >= 3) return // Max 3 hint levels
+
+  hintLevel.value++
+  hintsUsed.value++
+
+  try {
+    const response = await fetch(`${API_BASE}/api/dictations/hints`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        word: words.value[index.value],
+        level: hintLevel.value
+      })
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      currentHint.value = data.hint
+    }
+  } catch (error) {
+    console.error('Failed to fetch hint:', error)
+  }
+}
+
+async function analyzeError(attempted, expected) {
+  try {
+    const response = await fetch(`${API_BASE}/api/dictations/analyze-error`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attempted, expected })
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      errorFeedback.value = data.feedback
+    }
+  } catch (error) {
+    console.error('Failed to analyze error:', error)
+  }
 }
 
 const errors = computed(() => results.value.filter((r) => !r.correct))
@@ -237,6 +304,13 @@ const inputClass = computed(() => {
       🔊
     </button>
 
+    <!-- Hint System -->
+    <div v-if="currentHint" class="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-3 mx-auto max-w-md">
+      <p class="text-sm text-blue-800">
+        💡 <strong>Indice {{ hintLevel }}/3 :</strong> {{ currentHint }}
+      </p>
+    </div>
+
     <label for="answer-input" class="sr-only">Écrire le mot</label>
     <input
       id="answer-input"
@@ -248,21 +322,37 @@ const inputClass = computed(() => {
       @keydown.enter="!feedback && answer.trim() && validate()"
     />
 
-    <div aria-live="polite" aria-atomic="true" class="h-8 mb-3">
+    <div aria-live="polite" aria-atomic="true" class="min-h-8 mb-3">
       <p
         v-if="feedback"
         :class="`text-lg font-bold ${feedback === 'correct' ? 'text-green-600' : 'text-red-600'}`"
       >
         {{ feedback === 'correct' ? '✅ Bravo !' : '❌ Raté !' }}
       </p>
+      <!-- Error analysis feedback -->
+      <div v-if="errorFeedback && feedback === 'incorrect'" class="mt-2 bg-orange-50 border border-orange-200 rounded-xl p-3 mx-auto max-w-md">
+        <p class="text-sm text-orange-800">
+          {{ errorFeedback }}
+        </p>
+      </div>
     </div>
 
-    <button
-      :disabled="!!feedback || !answer.trim()"
-      class="bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white font-bold py-2 px-8 rounded-xl"
-      @click="validate"
-    >
-      Valider
-    </button>
+    <div class="flex gap-3 justify-center mb-4">
+      <button
+        :disabled="!!feedback || !answer.trim()"
+        class="bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white font-bold py-2 px-8 rounded-xl"
+        @click="validate"
+      >
+        Valider
+      </button>
+      <button
+        v-if="hintLevel < 3"
+        :disabled="!!feedback"
+        class="bg-yellow-400 hover:bg-yellow-500 disabled:opacity-40 font-bold py-2 px-6 rounded-xl"
+        @click="requestHint"
+      >
+        💡 Indice {{ hintLevel + 1 }}
+      </button>
+    </div>
   </div>
 </template>
