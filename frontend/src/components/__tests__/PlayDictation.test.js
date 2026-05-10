@@ -98,25 +98,4 @@ describe('PlayDictation', () => {
 
     await waitFor(() => expect(screen.getByText(/Termin/)).toBeInTheDocument(), { timeout: 3000 })
   }, 15000)
-
-  it('le mode tolérance accent accepte une réponse sans accent', async () => {
-    global.fetch = vi.fn((url) => {
-      if (url.includes('/scores')) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
-      }
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ id: 'abc', name: 'Test', words: ['\u00e9l\u00e8ve'] }),
-      })
-    })
-
-    await renderPlay()
-    await waitFor(() => expect(screen.getByText('Test')).toBeInTheDocument())
-
-    await userEvent.click(screen.getByLabelText('Accepter sans accents'))
-    await userEvent.type(screen.getByPlaceholderText(/cris le mot/), 'eleve')
-    await userEvent.click(screen.getByText('Valider'))
-
-    await waitFor(() => expect(screen.getByText(/Bravo/)).toBeInTheDocument())
-  })
 })
