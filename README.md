@@ -28,6 +28,15 @@ Le projet propose deux parcours simples :
 - Lancement d'une dictée mot par mot
 - Lecture audio des mots en français
 - Validation immédiate (correct / incorrect)
+- **Système d'indices progressifs** : 3 niveaux d'aide pour accompagner l'enfant
+  - Niveau 1 : Première lettre et longueur du mot
+  - Niveau 2 : Première et dernière lettre + nombre de voyelles
+  - Niveau 3 : Découpage en syllabes et sons spéciaux
+- **Analyse intelligente des erreurs** : Feedback ciblé selon le type d'erreur
+  - Détection des erreurs d'accents
+  - Détection des problèmes de consonnes doubles
+  - Détection des erreurs phonétiques
+  - Détection des inversions de lettres
 - Affichage du score final et des erreurs
 - Recommencer une dictée
 
@@ -110,6 +119,8 @@ Le frontend démarre sur le port 5173. Le proxy Vite redirige automatiquement `/
 
 Base URL : `http://localhost:8080/api`
 
+### Dictations
+
 - `GET  /dictations`      — récupérer toutes les dictées
 - `GET  /dictations/{id}` — récupérer une dictée par son identifiant
 - `POST /dictations`      — créer une dictée
@@ -122,6 +133,24 @@ Exemple de payload `POST /dictations` :
   "words": ["chat", "chien", "lapin"]
 }
 ```
+
+### Hints (Indices)
+
+- `POST /dictations/hints` — obtenir un indice pour un mot
+  ```json
+  {
+    "word": "chocolat",
+    "level": 1
+  }
+  ```
+
+- `POST /dictations/analyze-error` — analyser une erreur et obtenir un feedback
+  ```json
+  {
+    "attempted": "chocola",
+    "expected": "chocolat"
+  }
+  ```
 
 ## Notes importantes
 
@@ -185,7 +214,12 @@ Puis lancez le build :
 
 ## Pistes d'évolution
 
-- Ajouter une persistance (H2, PostgreSQL, etc.)
+- Ajouter une persistance (H2, PostgreSQL, etc.) ✅ (Fait)
 - Ajouter l'authentification adulte/enfant
-- Ajouter des niveaux de difficulté et des statistiques
+- **Système d'indices progressifs pour l'apprentissage** ✅ (Fait)
+  - 3 niveaux d'indices pour aider l'enfant
+  - Analyse intelligente des erreurs avec feedback ciblé
+- Ajouter des niveaux de difficulté et des statistiques avancées
+- Système de badges et récompenses
+- Parcours adaptatif personnalisé
 - Améliorer l'accessibilité et l'UX pour de jeunes enfants
