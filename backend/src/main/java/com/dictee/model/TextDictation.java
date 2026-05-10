@@ -31,7 +31,7 @@ public class TextDictation {
     @Column(nullable = false, length = 5000)
     private String fullText;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "text_dictation_segments", joinColumns = @JoinColumn(name = "text_dictation_id"))
     @Column(name = "segments")
     @OrderColumn(name = "segments_order")

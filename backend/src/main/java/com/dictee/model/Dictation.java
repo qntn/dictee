@@ -28,7 +28,7 @@ public class Dictation {
     private String name;
 
     @NotEmpty(message = "La liste de mots ne peut pas être vide")
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @OrderColumn
     private List<String> words;
 }
