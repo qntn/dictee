@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import confetti from 'canvas-confetti'
 import { API_BASE } from '../config'
@@ -123,7 +123,6 @@ function listenAgain() {
 }
 
 function validateSegment() {
-  const expected = textDictation.value.segments[currentSegmentIndex.value]
   userSegments.value[currentSegmentIndex.value] = currentAnswer.value.trim()
 
   feedback.value = 'validé'
