@@ -9,6 +9,7 @@ const name = ref('')
 const wordInput = ref('')
 const words = ref([])
 const error = ref(false)
+const loading = ref(false)
 
 onMounted(() => {
   document.title = 'Créer une dictée | Dictée'
@@ -27,8 +28,9 @@ function deleteWord(word) {
 }
 
 async function save() {
-  if (!name.value.trim() || words.value.length === 0) return
+  if (!name.value.trim() || words.value.length === 0 || loading.value) return
   error.value = false
+  loading.value = true
   try {
     const response = await fetch(`${API_BASE}/api/dictations`, {
       method: 'POST',
@@ -37,12 +39,14 @@ async function save() {
     })
     if (!response.ok) {
       error.value = true
+      loading.value = false
       return
     }
     const dictation = await response.json()
     router.push(`/dictation/${dictation.id}`)
   } catch {
     error.value = true
+    loading.value = false
   }
 }
 </script>
@@ -95,11 +99,11 @@ async function save() {
     </ul>
 
     <button
-      :disabled="!name.trim() || words.length === 0"
+      :disabled="!name.trim() || words.length === 0 || loading"
       class="bg-green-500 hover:bg-green-600 disabled:opacity-40 text-white font-bold py-2 px-6 rounded-xl"
       @click="save"
     >
-      Enregistrer la dictée
+      {{ loading ? 'Enregistrement en cours...' : 'Enregistrer la dictée' }}
     </button>
 
     <p v-if="error" class="mt-4 text-red-600 font-semibold" role="alert">

@@ -103,4 +103,28 @@ describe('CreateDictation', () => {
       expect(screen.getByRole('alert')).toHaveTextContent('Une erreur est survenue')
     )
   })
+
+  it('désactive le bouton pendant l\'enregistrement', async () => {
+    let resolvePromise
+    global.fetch = vi.fn(() => new Promise((resolve) => { resolvePromise = resolve }))
+    await renderCreate()
+
+    await userEvent.type(screen.getByLabelText('Nom de la dictée'), 'Animaux')
+    await userEvent.type(screen.getByLabelText('Ajouter un mot'), 'chat')
+    await userEvent.keyboard('{Enter}')
+
+    const saveButton = screen.getByText('Enregistrer la dictée')
+    expect(saveButton).not.toBeDisabled()
+
+    await userEvent.click(saveButton)
+
+    await waitFor(() =>
+      expect(screen.getByText('Enregistrement en cours...')).toBeDisabled()
+    )
+
+    resolvePromise({
+      ok: true,
+      json: () => Promise.resolve({ id: 'abc', name: 'Animaux', words: ['chat'] }),
+    })
+  })
 })
