@@ -17,8 +17,15 @@ const feedback = ref(null)
 const ignoreAccents = ref(false)
 const scores = ref([])
 
+// Voice synthesis settings
+const availableVoices = ref([])
+const selectedVoice = ref(null)
+const repetitionCount = ref(2)  // Number of times to repeat each word
+const showVoiceSettings = ref(false)
+
 let speakTimeout = null
 let feedbackTimeout = null
+let repetitionTimeouts = []
 
 const ttsAvailable = typeof window !== 'undefined' && 'speechSynthesis' in window
 
@@ -42,13 +49,89 @@ function launchFireworks() {
   })()
 }
 
+// Load available voices
+function loadVoices() {
+  if (!ttsAvailable || typeof window.speechSynthesis.getVoices !== 'function') return
+
+  const voices = window.speechSynthesis.getVoices()
+  // Filter French voices only
+  availableVoices.value = voices.filter((v) => v.lang.startsWith('fr'))
+
+  // Load saved voice preference
+  const savedVoiceURI = localStorage.getItem('dictee-voice')
+  if (savedVoiceURI) {
+    const saved = availableVoices.value.find((v) => v.voiceURI === savedVoiceURI)
+    if (saved) selectedVoice.value = saved
+  }
+
+  // Default to first French voice if available
+  if (!selectedVoice.value && availableVoices.value.length > 0) {
+    selectedVoice.value = availableVoices.value[0]
+  }
+}
+
+// Save voice preference
+function selectVoice(voice) {
+  selectedVoice.value = voice
+  localStorage.setItem('dictee-voice', voice.voiceURI)
+}
+
+// Load repetition preference
+function loadRepetitionPreference() {
+  const saved = localStorage.getItem('dictee-repetitions')
+  if (saved) {
+    repetitionCount.value = parseInt(saved, 10)
+  }
+}
+
+// Save repetition preference
+function saveRepetitionPreference(count) {
+  repetitionCount.value = count
+  localStorage.setItem('dictee-repetitions', count.toString())
+}
+
+// Clear any pending repetitions
+function clearRepetitions() {
+  repetitionTimeouts.forEach(clearTimeout)
+  repetitionTimeouts = []
+}
+
+// Improved speak function with repetitions and prosody
 function speak(word) {
   if (!ttsAvailable) return
-  const utterance = new SpeechSynthesisUtterance(word)
-  utterance.lang = 'fr-FR'
-  utterance.rate = 0.85
+
   window.speechSynthesis.cancel()
-  window.speechSynthesis.speak(utterance)
+  clearRepetitions()
+
+  const wordLength = word.length
+  const baseRate = 0.85
+  // Adapt rate based on word length (longer words = slower)
+  const adaptiveRate = wordLength > 8 ? baseRate - 0.1 : baseRate
+
+  // Schedule multiple repetitions with progressive pauses
+  for (let i = 0; i < repetitionCount.value; i++) {
+    const delay = i === 0 ? 400 : 1000 + (i - 1) * 1200  // First read after 400ms, then 1s pause between repetitions
+
+    const timeout = setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(word)
+      utterance.lang = 'fr-FR'
+
+      // First repetition at normal adapted rate, subsequent ones slightly slower
+      utterance.rate = i === 0 ? adaptiveRate : adaptiveRate - 0.05
+
+      // Slight pitch variation to add naturalness
+      utterance.pitch = 1.0 + (Math.random() * 0.1 - 0.05)
+
+      // Use selected voice if available
+      if (selectedVoice.value) {
+        utterance.voice = selectedVoice.value
+      }
+
+      window.speechSynthesis.speak(utterance)
+    }, delay)
+
+    repetitionTimeouts.push(timeout)
+  }
 }
 
 /** Suppress diacritics for accent-tolerant comparison. */
@@ -57,6 +140,14 @@ function normalize(str) {
 }
 
 onMounted(() => {
+  // Load voices
+  if (ttsAvailable) {
+    loadVoices()
+    loadRepetitionPreference()
+    // Voices may load asynchronously
+    window.speechSynthesis.onvoiceschanged = loadVoices
+  }
+
   fetch(`${API_BASE}/api/dictations/${route.params.id}`)
     .then((r) => {
       if (!r.ok) throw new Error('Not found')
@@ -73,6 +164,7 @@ onMounted(() => {
 onUnmounted(() => {
   clearTimeout(speakTimeout)
   clearTimeout(feedbackTimeout)
+  clearRepetitions()
 })
 
 watch([dictation, index, finished], ([d, i, fin]) => {
@@ -223,6 +315,57 @@ const inputClass = computed(() => {
       />
       Accepter sans accents
     </label>
+
+    <!-- Voice settings panel -->
+    <div v-if="ttsAvailable && availableVoices.length > 0" class="mb-4">
+      <button
+        class="text-sm text-blue-600 hover:text-blue-800 underline"
+        @click="showVoiceSettings = !showVoiceSettings"
+      >
+        {{ showVoiceSettings ? '🔼 Masquer' : '⚙️ Paramètres de voix' }}
+      </button>
+
+      <div
+        v-if="showVoiceSettings"
+        class="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-lg text-left max-w-md mx-auto"
+      >
+        <div class="mb-4">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Voix :
+          </label>
+          <select
+            :value="selectedVoice?.voiceURI"
+            class="w-full border rounded-lg p-2 text-sm"
+            @change="selectVoice(availableVoices.find(v => v.voiceURI === $event.target.value))"
+          >
+            <option
+              v-for="voice in availableVoices"
+              :key="voice.voiceURI"
+              :value="voice.voiceURI"
+            >
+              {{ voice.name }} ({{ voice.lang }})
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Nombre de répétitions : {{ repetitionCount }}
+          </label>
+          <input
+            :value="repetitionCount"
+            type="range"
+            min="1"
+            max="4"
+            class="w-full"
+            @input="saveRepetitionPreference(parseInt($event.target.value))"
+          />
+          <p class="text-xs text-gray-500 mt-1">
+            Le mot sera lu {{ repetitionCount }} fois avec des pauses
+          </p>
+        </div>
+      </div>
+    </div>
 
     <p v-if="!ttsAvailable" class="text-amber-600 text-sm mb-4">
       ⚠️ La synthèse vocale n'est pas disponible sur ce navigateur.
