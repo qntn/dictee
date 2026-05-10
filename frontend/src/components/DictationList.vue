@@ -23,10 +23,21 @@ async function loadDictations() {
 
 async function deleteDictation(id, name) {
   if (!window.confirm(`Supprimer la dictée "${name}" ?`)) return
+
+  // Optimistic UI update - remove immediately for instant visual feedback
+  const originalDictations = dictations.value
+  dictations.value = dictations.value.filter((d) => d.id !== id)
+
   try {
     const res = await fetch(`${API_BASE}/api/dictations/${id}`, { method: 'DELETE' })
-    if (res.ok) dictations.value = dictations.value.filter((d) => d.id !== id)
+    if (!res.ok) {
+      // Rollback on failure
+      dictations.value = originalDictations
+      alert('Impossible de supprimer la dictée.')
+    }
   } catch {
+    // Rollback on error
+    dictations.value = originalDictations
     alert('Impossible de supprimer la dictée.')
   }
 }
