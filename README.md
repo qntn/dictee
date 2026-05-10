@@ -37,7 +37,8 @@ Le projet inclut un fichier `render.yaml` permettant le déploiement automatique
 
 ### Prérequis
 
-- Un compte [Render](https://render.com) (l'offre gratuite suffit)
+- Un compte [Render](https://render.com)
+- Une base PostgreSQL [Neon](https://neon.tech)
 - Le dépôt forké ou connecté à votre compte GitHub
 
 ### Étapes
@@ -47,8 +48,13 @@ Le projet inclut un fichier `render.yaml` permettant le déploiement automatique
 3. Render détecte automatiquement le fichier `render.yaml` et crée les deux services :
    - **dictee-backend** — API Spring Boot (Docker, port 8080, profil `prod`)
    - **dictee-frontend** — site statique Vue/Vite
-4. Les variables d'environnement (`VITE_API_URL`, `CORS_ALLOWED_ORIGINS`, `SPRING_PROFILES_ACTIVE`) sont configurées automatiquement entre les deux services.
-5. Cliquez sur **Apply** pour lancer le déploiement.
+4. Créez votre base PostgreSQL sur Neon puis récupérez :
+    - `DATABASE_URL` (URL de connexion)
+    - `DATABASE_USERNAME`
+    - `DATABASE_PASSWORD`
+5. Dans Render, ouvrez le service **dictee-backend** puis renseignez ces 3 variables d'environnement.
+6. Les variables d'environnement (`VITE_API_URL`, `CORS_ALLOWED_ORIGINS`, `SPRING_PROFILES_ACTIVE`) sont configurées automatiquement entre les deux services.
+7. Cliquez sur **Apply** pour lancer le déploiement.
 
 > **Note :** Sur l'offre gratuite, les services s'endorment après 15 minutes d'inactivité. Le premier appel après une période d'inactivité peut prendre quelques secondes.
 
