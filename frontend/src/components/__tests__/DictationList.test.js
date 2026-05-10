@@ -34,6 +34,7 @@ describe('DictationList', () => {
             { id: '2', name: 'Couleurs', words: ['rouge'] },
           ]),
       })
+      // DictationList now loads word dictations and text dictations in parallel.
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
     render(DictationList, { global: { stubs } })
     await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
@@ -59,8 +60,11 @@ describe('DictationList', () => {
 
   it('permet de recharger après une erreur', async () => {
     global.fetch = vi.fn()
+      // Initial load: first request fails.
       .mockRejectedValueOnce(new Error('fail'))
+      // Initial load: second parallel request still resolves.
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
+      // Retry load: both parallel requests resolve.
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) })
 
@@ -69,6 +73,7 @@ describe('DictationList', () => {
 
     await userEvent.click(screen.getByText('Réessayer'))
     await waitFor(() => expect(screen.getByText(/Aucune dictée/)).toBeInTheDocument())
+    // 2 calls on first load + 2 calls on retry (Promise.all on both attempts).
     expect(global.fetch).toHaveBeenCalledTimes(4)
   })
 
