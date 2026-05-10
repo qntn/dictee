@@ -31,7 +31,7 @@ public class TextDictation {
     @Column(nullable = false, length = 5000)
     private String fullText;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @OrderColumn
     private List<String> segments;
 }
