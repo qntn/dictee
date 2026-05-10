@@ -149,7 +149,6 @@ function shuffleArray(array) {
   return shuffled
 }
 
-
 onMounted(() => {
   // Load voices
   if (ttsAvailable) {
