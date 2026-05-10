@@ -3,6 +3,7 @@ package com.dictee.controller;
 import com.dictee.model.Dictation;
 import com.dictee.service.DictationScoreService;
 import com.dictee.service.DictationService;
+import com.dictee.service.HintService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -30,6 +31,9 @@ class DictationControllerTest {
 
     @MockBean
     private DictationScoreService scoreService;
+
+    @MockBean
+    private HintService hintService;
 
     @Test
     void findAll_returnsEmptyList() throws Exception {
