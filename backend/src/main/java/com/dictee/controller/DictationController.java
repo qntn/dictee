@@ -4,8 +4,10 @@ import com.dictee.model.Dictation;
 import com.dictee.model.DictationScore;
 import com.dictee.service.DictationScoreService;
 import com.dictee.service.DictationService;
+import com.dictee.service.HintService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,11 +20,14 @@ public class DictationController {
 
     private final DictationService dictationService;
     private final DictationScoreService scoreService;
+    private final HintService hintService;
 
     public DictationController(DictationService dictationService,
-                               DictationScoreService scoreService) {
+                               DictationScoreService scoreService,
+                               HintService hintService) {
         this.dictationService = dictationService;
         this.scoreService = scoreService;
+        this.hintService = hintService;
     }
 
     @GetMapping
@@ -77,5 +82,23 @@ public class DictationController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // --- Hint endpoints ---
+
+    @PostMapping("/hints")
+    public ResponseEntity<HintResponse> getHint(@Valid @RequestBody HintRequest request) {
+        String hint = hintService.generateHint(request.word(), request.level());
+        return ResponseEntity.ok(new HintResponse(hint));
+    }
+
+    @PostMapping("/analyze-error")
+    public ResponseEntity<ErrorAnalysisResponse> analyzeError(@Valid @RequestBody ErrorAnalysisRequest request) {
+        String feedback = hintService.analyzeError(request.attempted(), request.expected());
+        return ResponseEntity.ok(new ErrorAnalysisResponse(feedback));
+    }
+
     record ScoreRequest(@Min(0) int score, @Min(1) int total) {}
+    record HintRequest(@NotBlank String word, @Min(1) int level) {}
+    record HintResponse(String hint) {}
+    record ErrorAnalysisRequest(@NotBlank String attempted, @NotBlank String expected) {}
+    record ErrorAnalysisResponse(String feedback) {}
 }
