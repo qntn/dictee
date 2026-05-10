@@ -14,7 +14,6 @@ const answer = ref('')
 const results = ref([])
 const finished = ref(false)
 const feedback = ref(null)
-const ignoreAccents = ref(false)
 const scores = ref([])
 
 let speakTimeout = null
@@ -51,11 +50,6 @@ function speak(word) {
   window.speechSynthesis.speak(utterance)
 }
 
-/** Suppress diacritics for accent-tolerant comparison. */
-function normalize(str) {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-}
-
 /** Shuffle array using Fisher-Yates algorithm. */
 function shuffleArray(array) {
   const shuffled = [...array]
@@ -65,6 +59,7 @@ function shuffleArray(array) {
   }
   return shuffled
 }
+
 
 onMounted(() => {
   fetch(`${API_BASE}/api/dictations/${route.params.id}`)
@@ -112,9 +107,7 @@ watch(finished, async (fin) => {
 
 function validate() {
   const expectedWord = words.value[index.value]
-  const compare = ignoreAccents.value
-    ? normalize(answer.value.trim()) === normalize(expectedWord)
-    : answer.value.trim().toLowerCase() === expectedWord.toLowerCase()
+  const compare = answer.value.trim().toLowerCase() === expectedWord.toLowerCase()
 
   results.value.push({ word: expectedWord, answer: answer.value.trim(), correct: compare })
   feedback.value = compare ? 'correct' : 'incorrect'
@@ -224,15 +217,6 @@ const inputClass = computed(() => {
   <div v-else class="text-center">
     <h1 class="text-2xl font-bold mb-1">{{ dictation.name }}</h1>
     <p class="text-gray-500 mb-4">Mot {{ index + 1 }} / {{ words.length }}</p>
-
-    <label class="inline-flex items-center gap-2 text-sm text-gray-600 mb-6 cursor-pointer select-none">
-      <input
-        v-model="ignoreAccents"
-        type="checkbox"
-        class="rounded"
-      />
-      Accepter sans accents
-    </label>
 
     <p v-if="!ttsAvailable" class="text-amber-600 text-sm mb-4">
       ⚠️ La synthèse vocale n'est pas disponible sur ce navigateur.
