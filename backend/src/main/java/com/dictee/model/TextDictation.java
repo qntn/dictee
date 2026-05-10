@@ -32,6 +32,8 @@ public class TextDictation {
     private String fullText;
 
     @ElementCollection
-    @OrderColumn
+    @CollectionTable(name = "text_dictation_segments", joinColumns = @JoinColumn(name = "text_dictation_id"))
+    @Column(name = "segments")
+    @OrderColumn(name = "segments_order")
     private List<String> segments;
 }
