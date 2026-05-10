@@ -69,6 +69,7 @@ describe('DictationList', () => {
 
     await userEvent.click(screen.getByText('Réessayer'))
     await waitFor(() => expect(screen.getByText(/Aucune dictée/)).toBeInTheDocument())
+    expect(global.fetch).toHaveBeenCalledTimes(4)
   })
 
   it('supprime une dictée visuellement après confirmation', async () => {
