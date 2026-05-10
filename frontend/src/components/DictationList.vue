@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { API_BASE } from '../config'
 
 const dictations = ref([])
+const textDictations = ref([])
 const loading = ref(true)
 const error = ref(false)
 
@@ -11,9 +12,13 @@ async function loadDictations() {
   loading.value = true
   error.value = false
   try {
-    const res = await fetch(`${API_BASE}/api/dictations`)
-    if (!res.ok) throw new Error('Erreur serveur')
-    dictations.value = await res.json()
+    const [res1, res2] = await Promise.all([
+      fetch(`${API_BASE}/api/dictations`),
+      fetch(`${API_BASE}/api/text-dictations`)
+    ])
+    if (!res1.ok || !res2.ok) throw new Error('Erreur serveur')
+    dictations.value = await res1.json()
+    textDictations.value = await res2.json()
   } catch {
     error.value = true
   } finally {
@@ -38,6 +43,16 @@ async function deleteDictation(id, name) {
   } catch {
     // Rollback on error
     dictations.value = originalDictations
+    alert('Impossible de supprimer la dictée.')
+  }
+}
+
+async function deleteTextDictation(id, name) {
+  if (!window.confirm(`Supprimer la dictée de texte "${name}" ?`)) return
+  try {
+    const res = await fetch(`${API_BASE}/api/text-dictations/${id}`, { method: 'DELETE' })
+    if (res.ok) textDictations.value = textDictations.value.filter((d) => d.id !== id)
+  } catch {
     alert('Impossible de supprimer la dictée.')
   }
 }
@@ -67,32 +82,68 @@ onMounted(loadDictations)
       </button>
     </div>
 
-    <p v-else-if="dictations.length === 0" class="text-gray-500">
-      Aucune dictée pour l'instant.
-      <RouterLink to="/creer" class="text-blue-600 underline">Créez-en une !</RouterLink>
-    </p>
+    <div v-else>
+      <p v-if="dictations.length === 0 && textDictations.length === 0" class="text-gray-500 mb-4">
+        Aucune dictée pour l'instant.
+      </p>
 
-    <ul v-else class="space-y-3">
-      <li
-        v-for="d in dictations"
-        :key="d.id"
-        class="flex items-center gap-2"
-      >
-        <RouterLink
-          :to="`/dictation/${d.id}`"
-          class="flex-1 bg-white rounded-xl shadow p-4 hover:bg-yellow-100 transition"
-        >
-          <span class="font-semibold text-lg">{{ d.name }}</span>
-          <span class="ml-3 text-gray-500 text-sm">{{ d.words.length }} mot(s)</span>
-        </RouterLink>
-        <button
-          :aria-label="`Supprimer la dictée ${d.name}`"
-          class="text-red-400 hover:text-red-600 text-xl font-bold px-2 py-1 rounded-lg hover:bg-red-50 transition"
-          @click="deleteDictation(d.id, d.name)"
-        >
-          🗑️
-        </button>
-      </li>
-    </ul>
+      <!-- Word Dictations Section -->
+      <div v-if="dictations.length > 0" class="mb-8">
+        <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">
+          ✏️ Dictées de mots
+        </h2>
+        <ul class="space-y-3">
+          <li
+            v-for="d in dictations"
+            :key="d.id"
+            class="flex items-center gap-2"
+          >
+            <RouterLink
+              :to="`/dictation/${d.id}`"
+              class="flex-1 bg-white rounded-xl shadow p-4 hover:bg-yellow-100 transition"
+            >
+              <span class="font-semibold text-lg">{{ d.name }}</span>
+              <span class="ml-3 text-gray-500 text-sm">{{ d.words.length }} mot(s)</span>
+            </RouterLink>
+            <button
+              :aria-label="`Supprimer la dictée ${d.name}`"
+              class="text-red-400 hover:text-red-600 text-xl font-bold px-2 py-1 rounded-lg hover:bg-red-50 transition"
+              @click="deleteDictation(d.id, d.name)"
+            >
+              🗑️
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Text Dictations Section -->
+      <div v-if="textDictations.length > 0">
+        <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">
+          📝 Dictées de texte
+        </h2>
+        <ul class="space-y-3">
+          <li
+            v-for="d in textDictations"
+            :key="d.id"
+            class="flex items-center gap-2"
+          >
+            <RouterLink
+              :to="`/text-dictation/${d.id}`"
+              class="flex-1 bg-white rounded-xl shadow p-4 hover:bg-blue-100 transition"
+            >
+              <span class="font-semibold text-lg">{{ d.name }}</span>
+              <span class="ml-3 text-gray-500 text-sm">{{ d.segments.length }} phrase(s)</span>
+            </RouterLink>
+            <button
+              :aria-label="`Supprimer la dictée de texte ${d.name}`"
+              class="text-red-400 hover:text-red-600 text-xl font-bold px-2 py-1 rounded-lg hover:bg-red-50 transition"
+              @click="deleteTextDictation(d.id, d.name)"
+            >
+              🗑️
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
   </div>
 </template>
