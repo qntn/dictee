@@ -68,4 +68,77 @@ describe('DictationList', () => {
     await userEvent.click(screen.getByText('Réessayer'))
     await waitFor(() => expect(screen.getByText(/Aucune dictée/)).toBeInTheDocument())
   })
+
+  it('supprime une dictée visuellement après confirmation', async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: '1', name: 'Animaux', words: ['chat', 'chien'] },
+            { id: '2', name: 'Couleurs', words: ['rouge'] },
+          ]),
+      })
+      .mockResolvedValueOnce({ ok: true })
+
+    global.confirm = vi.fn(() => true)
+
+    render(DictationList, { global: { stubs } })
+    await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
+    expect(screen.getByText('Couleurs')).toBeInTheDocument()
+
+    const deleteButtons = screen.getAllByLabelText(/Supprimer la dictée/)
+    await userEvent.click(deleteButtons[0])
+
+    await waitFor(() => expect(screen.queryByText('Animaux')).not.toBeInTheDocument())
+    expect(screen.getByText('Couleurs')).toBeInTheDocument()
+  })
+
+  it('ne supprime pas une dictée si l\'utilisateur annule', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: '1', name: 'Animaux', words: ['chat', 'chien'] },
+          ]),
+      })
+    )
+    global.confirm = vi.fn(() => false)
+
+    render(DictationList, { global: { stubs } })
+    await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
+
+    const deleteButton = screen.getByLabelText(/Supprimer la dictée/)
+    await userEvent.click(deleteButton)
+
+    expect(screen.getByText('Animaux')).toBeInTheDocument()
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('restaure la dictée si la suppression échoue', async () => {
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: '1', name: 'Animaux', words: ['chat', 'chien'] },
+            { id: '2', name: 'Couleurs', words: ['rouge'] },
+          ]),
+      })
+      .mockResolvedValueOnce({ ok: false })
+
+    global.confirm = vi.fn(() => true)
+    global.alert = vi.fn()
+
+    render(DictationList, { global: { stubs } })
+    await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
+
+    const deleteButtons = screen.getAllByLabelText(/Supprimer la dictée/)
+    await userEvent.click(deleteButtons[0])
+
+    await waitFor(() => expect(screen.getByText('Animaux')).toBeInTheDocument())
+    expect(screen.getByText('Couleurs')).toBeInTheDocument()
+    expect(global.alert).toHaveBeenCalledWith('Impossible de supprimer la dictée.')
+  })
 })
