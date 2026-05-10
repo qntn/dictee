@@ -14,7 +14,6 @@ const answer = ref('')
 const results = ref([])
 const finished = ref(false)
 const feedback = ref(null)
-const ignoreAccents = ref(false)
 const scores = ref([])
 const currentHint = ref(null)
 const hintLevel = ref(0)
@@ -138,11 +137,6 @@ function speak(word) {
   }
 }
 
-/** Suppress diacritics for accent-tolerant comparison. */
-function normalize(str) {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-}
-
 /** Shuffle array using Fisher-Yates algorithm. */
 function shuffleArray(array) {
   const shuffled = [...array]
@@ -208,9 +202,7 @@ watch(finished, async (fin) => {
 
 function validate() {
   const expectedWord = words.value[index.value]
-  const compare = ignoreAccents.value
-    ? normalize(answer.value.trim()) === normalize(expectedWord)
-    : answer.value.trim().toLowerCase() === expectedWord.toLowerCase()
+  const compare = answer.value.trim().toLowerCase() === expectedWord.toLowerCase()
 
   results.value.push({
     word: expectedWord,
@@ -383,15 +375,6 @@ const inputClass = computed(() => {
   <div v-else class="text-center">
     <h1 class="text-2xl font-bold mb-1">{{ dictation.name }}</h1>
     <p class="text-gray-500 mb-4">Mot {{ index + 1 }} / {{ words.length }}</p>
-
-    <label class="inline-flex items-center gap-2 text-sm text-gray-600 mb-6 cursor-pointer select-none">
-      <input
-        v-model="ignoreAccents"
-        type="checkbox"
-        class="rounded"
-      />
-      Accepter sans accents
-    </label>
 
     <!-- Voice settings panel -->
     <div v-if="ttsAvailable && availableVoices.length > 0" class="mb-4">

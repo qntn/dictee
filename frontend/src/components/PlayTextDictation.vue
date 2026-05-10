@@ -14,6 +14,9 @@ const userSegments = ref([])
 const currentAnswer = ref('')
 const feedback = ref(null)
 const scores = ref([])
+const currentHint = ref(null)
+const hintLevel = ref(0)
+const hintsUsed = ref([]) // Track hints used per segment
 
 let speakTimeout = null
 let feedbackTimeout = null
@@ -77,6 +80,7 @@ onMounted(() => {
     .then((data) => {
       textDictation.value = data
       userSegments.value = new Array(data.segments.length).fill('')
+      hintsUsed.value = new Array(data.segments.length).fill(0)
       document.title = `${data.name} — Dictée de texte`
     })
     .catch(() => router.push('/'))
@@ -131,6 +135,8 @@ function validateSegment() {
   feedbackTimeout = setTimeout(() => {
     feedback.value = null
     currentAnswer.value = ''
+    currentHint.value = null
+    hintLevel.value = 0
 
     if (currentSegmentIndex.value + 1 >= textDictation.value.segments.length) {
       // All segments done, move to review phase
@@ -184,8 +190,39 @@ function restart() {
   phase.value = 'intro'
   currentSegmentIndex.value = 0
   userSegments.value = new Array(textDictation.value.segments.length).fill('')
+  hintsUsed.value = new Array(textDictation.value.segments.length).fill(0)
   currentAnswer.value = ''
   feedback.value = null
+  currentHint.value = null
+  hintLevel.value = 0
+}
+
+async function requestHint() {
+  if (feedback.value) return // Don't allow hints during feedback
+  if (hintLevel.value >= 3) return // Max 3 hint levels
+
+  hintLevel.value++
+  hintsUsed.value[currentSegmentIndex.value]++
+
+  try {
+    // Get hint for the current segment
+    const segment = textDictation.value.segments[currentSegmentIndex.value]
+    const response = await fetch(`${API_BASE}/api/dictations/hints`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        word: segment,
+        level: hintLevel.value
+      })
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      currentHint.value = data.hint
+    }
+  } catch (error) {
+    console.error('Failed to fetch hint:', error)
+  }
 }
 
 const totalScore = computed(() => {
@@ -267,6 +304,13 @@ const inputClass = computed(() => {
       🔊
     </button>
 
+    <!-- Hint System -->
+    <div v-if="currentHint" class="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-3 mx-auto max-w-2xl">
+      <p class="text-sm text-blue-800">
+        💡 <strong>Indice {{ hintLevel }}/3 :</strong> {{ currentHint }}
+      </p>
+    </div>
+
     <label for="segment-input" class="sr-only">Écrire la phrase</label>
     <textarea
       id="segment-input"
@@ -284,13 +328,23 @@ const inputClass = computed(() => {
       </p>
     </div>
 
-    <button
-      :disabled="!!feedback || !currentAnswer.trim()"
-      class="bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white font-bold py-2 px-8 rounded-xl"
-      @click="validateSegment"
-    >
-      Valider (Ctrl+Enter)
-    </button>
+    <div class="flex gap-3 justify-center">
+      <button
+        :disabled="!!feedback || !currentAnswer.trim()"
+        class="bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white font-bold py-2 px-8 rounded-xl"
+        @click="validateSegment"
+      >
+        Valider (Ctrl+Enter)
+      </button>
+      <button
+        v-if="hintLevel < 3"
+        :disabled="!!feedback"
+        class="bg-yellow-400 hover:bg-yellow-500 disabled:opacity-40 font-bold py-2 px-6 rounded-xl"
+        @click="requestHint"
+      >
+        💡 Indice {{ hintLevel + 1 }}
+      </button>
+    </div>
   </div>
 
   <!-- REVIEW PHASE -->
