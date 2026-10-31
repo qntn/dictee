@@ -1,28 +1,57 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { API_BASE } from '../config'
+
+// The free Render backend sleeps after 15 min idle and takes 1–2 min to wake up.
+// Meanwhile requests hang or fail, so we tell the user and keep retrying.
+const WAKING_MESSAGE_AFTER_MS = 4000
+const RETRY_DELAY_MS = 5000
+const GIVE_UP_AFTER_MS = 3 * 60 * 1000
 
 const dictations = ref([])
 const textDictations = ref([])
 const loading = ref(true)
 const error = ref(false)
+const waking = ref(false)
+let unmounted = false
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function fetchAll() {
+  const [res1, res2] = await Promise.all([
+    fetch(`${API_BASE}/api/dictations`),
+    fetch(`${API_BASE}/api/text-dictations`)
+  ])
+  if (!res1.ok || !res2.ok) throw new Error('Erreur serveur')
+  dictations.value = await res1.json()
+  textDictations.value = await res2.json()
+}
 
 async function loadDictations() {
   loading.value = true
   error.value = false
+  waking.value = false
+  const wakingTimer = setTimeout(() => { waking.value = true }, WAKING_MESSAGE_AFTER_MS)
+  const deadline = Date.now() + GIVE_UP_AFTER_MS
   try {
-    const [res1, res2] = await Promise.all([
-      fetch(`${API_BASE}/api/dictations`),
-      fetch(`${API_BASE}/api/text-dictations`)
-    ])
-    if (!res1.ok || !res2.ok) throw new Error('Erreur serveur')
-    dictations.value = await res1.json()
-    textDictations.value = await res2.json()
-  } catch {
-    error.value = true
+    while (!unmounted) {
+      try {
+        await fetchAll()
+        return
+      } catch {
+        if (Date.now() + RETRY_DELAY_MS > deadline) {
+          error.value = true
+          return
+        }
+        waking.value = true
+        await wait(RETRY_DELAY_MS)
+      }
+    }
   } finally {
+    clearTimeout(wakingTimer)
     loading.value = false
+    waking.value = false
   }
 }
 
@@ -58,13 +87,19 @@ async function deleteTextDictation(id, name) {
 }
 
 onMounted(loadDictations)
+onUnmounted(() => { unmounted = true })
 </script>
 
 <template>
   <div>
     <h1 class="text-2xl font-bold mb-4">📚 Les dictées</h1>
 
-    <p v-if="loading" class="text-gray-400 animate-pulse">Chargement…</p>
+    <div v-if="loading">
+      <p class="text-gray-400 animate-pulse">Chargement…</p>
+      <p v-if="waking" class="mt-2 text-gray-500" role="status">
+        😴 Le serveur se réveille, ça peut prendre une ou deux minutes…
+      </p>
+    </div>
 
     <div
       v-else-if="error"
